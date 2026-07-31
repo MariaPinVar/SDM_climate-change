@@ -1,0 +1,16 @@
+
+##Define Lineages and Regions
+genera = c("Oritrophium", "Loricaria", "Senecio", "Espeletia", "Lobelia", "Dendrosenecio", "Helichrysum")
+regions= c("SA", "EA")
+
+##Define directories for results
+maxent.fuMPI=  "maxent_outputsfutureMPI"
+maxent.fuMIROC= "maxent_outputsfutureMIROC"
+maxent.cu= "maxent_outputs"
+maxent.mpi= "maxent_outputs_pastMPI"
+maxent.miroc= "maxent_outputs_past"
+all_maxent_pathes = c(maxent.fuMPI, maxent.fuMIROC, maxent.cu,maxent.mpi, maxent.miroc)
+modelnames=c("cu","mpi", "miroc", "fuMPI", "fuMIROC")
+
+## Define path to Bioclim layers
+path_to_chelsa = '../CHELSA_bio_layers/current/'
