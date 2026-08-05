@@ -85,14 +85,13 @@ points.df <- data.frame(
 )
 coordinates(points.df)= ~ longitude+ latitude
 
+# Check variable correlation
 chelsa.dat=raster::extract(bc.stack,points.df)
 chelsa.dat = as.data.frame(chelsa.dat)
 write.csv(chelsa.dat, 'Results/chelsa_background.csv')
 usdm::vif(chelsa.dat)
 cor.full = cor(chelsa.dat,  use="complete.obs", method = 'pearson')
 write.csv(cor.full, "Results/chelsa_all_correlation.csv")
-
-# Check variable correlation
 vif_results <- vif(chelsa.dat)
 
 print(vif_results)
