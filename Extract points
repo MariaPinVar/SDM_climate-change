@@ -1,0 +1,106 @@
+# make points within thresholded SDMs
+
+
+source('/home/rstudio/data/NicheModelsMaria_April24/Nichemodels_DATA/FUN/001_get_started_MK.R')
+
+all.combined<-data_frame()
+region='EA'
+
+print('make global point df')
+crs_proj4 <- "+proj=longlat +datum=WGS84 +no_defs"
+
+# Convert to a CRS object                                                           
+crs_object <- sf::st_crs(crs_proj4)
+
+# Extract the WKT2 representation
+wkt2_string <- crs_object$wkt
+for(region in c("SA", "EA")){
+  if(region == "EA"){
+    genera = c("Helichrysum", "Lobelia", "Dendrosenecio")
+  }else{
+    genera = c(  "Oritrophium", "Espeletia",  "Loricaria",  "Senecio")
+    #genera = c(  "Espeletia")
+  }
+  for(lineage in genera){
+    occ = readRDS(paste0("./DATA/", lineage, "_cleaned_occurrences.INGROUP_complete.RDS",sep=""))
+    occ
+    spnames = unique(occ$species)
+    spnames
+    for(number in 1:length(spnames)){
+      number
+      species = spnames[number]
+      ##Calculate area tables for all species######
+      print(species)
+      
+      for(model in modelnames){
+        CHELSA.values<-data.frame() # single column dataframe that is empty and will be filled in loop with models
+        model.path = get_path(model)
+        path_to_maxent= paste0('./Nichemodels/', lineage, "/", species, "/", model.path)
+        path_to_maxent
+        
+        if(dir.exists(path_to_maxent)){
+          
+          #LOAD THRESHOLDED MAXENT
+          maxentasc= get_asc(model)
+          if(file.exists(paste0(path_to_maxent, '/thres_points.RDS'))){
+            print(model)
+            asc_name = get_asc(model)
+            
+            if(file.exists(paste0(path_to_maxent,"/thresholded_" , species, asc_name))){
+              maxent_tresh = read_stars(paste0(path_to_maxent,"/thresholded_" , species, maxentasc))
+            
+            # make global points
+              ####Convert rasters into SP#####
+              # at.pred..60.st <- st_as_stars(maxent_tresh, as_points = FALSE, merge = TRUE )
+              # at.pred..60.sf <- st_as_sf(at.pred..60.st, as_points = FALSE, merge = TRUE )
+              # at.pred..60.sf <- st_make_valid(at.pred..60.sf)
+              # #at.pred..60.sp <- as_Spatial(at.pred..60.sf)
+              # #at.pred..60.sf <- st_as_sf(at.pred..60.sp, as_points = FALSE, merge = TRUE )  
+              
+              at.pred.sh = shapefile(paste0(path_to_maxent,"/thresholded_" , species, "_shapefile.shp"))
+              at.pred.sf = st_as_sf(at.pred.sh)
+             
+              bbox_area = st_area(st_as_sfc(st_bbox(at.pred.sf)))
+              shape_area = sum(st_area(at.pred.sf))
+              ratio = as.numeric(bbox_area / shape_area)
+              print(ratio)
+
+              if(ratio>10000){
+                
+              }
+              
+              num_points = 2500
+              if(ratio>10000){
+                xy = at.pred.sf %>%
+                    st_as_sf(coords = c("x", "y"), crs = crs_object) %>%
+                   # group_by(ID) %>%
+                    summarise(geometry = st_combine(geometry)) %>%
+                    st_cast("POLYGON")
+                pts.pp2=   lapply(1:length(xy$geometry), function(i) st_sample(xy[i,], 15))
+                pts.pp2.1=   lapply(1:length(pts.pp2), function(i) st_sf(geometry = pts.pp2[[i]], number = 1:length(pts.pp2[[i]])))
+                sf_points <- do.call(rbind, pts.pp2.1)
+                pts.pp2
+                points.df <- data.frame(
+                  number = sf_points$number,
+                  latitude = st_coordinates(sf_points)[, 2],
+                  longitude = st_coordinates(sf_points)[, 1]
+                )
+                points.df
+              }else{
+                pts.pp=st_sample(at.pred.sf, num_points)
+                sf_points <- st_sf(geometry = pts.pp, number = 1:length(pts.pp))
+                points.df <- data.frame(
+                  number = sf_points$number,
+                  latitude = st_coordinates(sf_points)[, 2],
+                  longitude = st_coordinates(sf_points)[, 1]
+                )
+              }
+              coordinates(points.df)= ~ longitude+ latitude
+              saveRDS(points.df, paste0(path_to_maxent, '/thres_points.RDS'))
+            }
+          }
+        }
+      }
+    }
+  }
+}
