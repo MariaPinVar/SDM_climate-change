@@ -1,0 +1,129 @@
+########################################################################
+# make maxent threshold
+# M. Pinilla - loop by M. Kandziora
+# 29/07/2022
+########################################################################
+
+
+## !!! TODO check MPV 04 future as there she is uysing sf instead of raster and fix all
+source('../SCRIPTS/Rcode/001_get_started_MK.R')
+
+
+######## Threshold all Maxent Models #####
+chelsa.dat = read.csv('Results/chelsa_background.csv')[2:20]
+
+uncorrelated_vars <- vifstep(chelsa.dat, th=10)
+uncorr = uncorrelated_vars@results$Variables
+uncorr.numbers = gsub('CHELSA_bio10_', '', uncorr)
+
+crs_proj4 <- "+proj=longlat +datum=WGS84 +no_defs"
+
+# Convert to a CRS object                                                           
+crs_object <- sf::st_crs(crs_proj4)
+
+# Extract the WKT2 representation
+wkt2_string <- crs_object$wkt
+
+
+
+#select species first
+setwd(wd)
+region="EA"
+for(region in c("SA", "EA")){
+  setwd(wd)
+  
+  if(region == "EA"){
+    #genera = c("Dendrosenecio", "Helichrysum", "Lobelia")
+    genera = c("Helichrysum", "Lobelia")
+  }else{
+    genera = c("Oritrophium","Loricaria", "Senecio",  "Espeletia")
+  }
+  for(lineage in genera){
+    occ = readRDS(paste0("./DATA/", lineage, "_cleaned_occurrences.INGROUP_complete.RDS",sep=""))
+    occ
+    
+    n.occ = occ %>% group_by(species) %>% summarise(n=n())
+    
+    spnames = unique(occ$species)
+    spnames
+    for(number in 1:length(spnames)){
+      species = spnames[number]
+      names(occ)
+      at <- occ[occ$species==species,]
+      at
+      if((length(at$species) >4)) {
+        print(species)
+        areas.comparison = c(species)
+        if(dir.exists(paste0('./Nichemodels/', lineage, "/", species))){
+        ############## make threshold model ###################
+        print('thresholding - aka suitable area')
+        for(model in modelnames){
+          
+          print(model)
+          
+          model.path = get_path(model)
+          
+          path_to_maxent= paste0('./Nichemodels/', lineage, "/", species, "/", model.path)
+          path_to_maxent
+          asc_name = get_asc(model)
+          
+  
+          # get suitable area
+          if(!file.exists(paste0(path_to_maxent,"/thresholded_" , species, "_shapefile.shp"))){
+            at.pred.route<-paste0(path_to_maxent,"/" , species, asc_name)
+            at.pred<-read_stars(at.pred.route)
+            plot(at.pred)
+            #LOAD THRESHOLDED MAXENT
+            maxent_tresh <-at.pred
+            maxent_tresh
+            maxent_tresh[maxent_tresh <=0.6] <- NA
+            #plot(maxent_tresh)
+            
+            at.pred.sf = st_as_sf(maxent_tresh)
+            sum.area = sum(st_area(at.pred.sf)/1000000)
+            print(sum.area)
+            #drop_units(sum.area)
+            if(sum.area != 0){ # if there is suitable area
+           #   if(!file.exists(paste0(path_to_maxent,"/thresholded_" , species, "_shapefile.shp"))){
+                
+                print('write stars')
+                write_stars(maxent_tresh, paste0(path_to_maxent,"/thresholded_" , species, asc_name) )
+                
+                maxent_tresh.sp = st_as_sf(maxent_tresh, as_points = FALSE, merge = TRUE)
+                maxent_tresh.sp <- st_geometry(maxent_tresh.sp)
+                maxent_tresh.sp <- st_union(maxent_tresh.sp )
+                
+               
+                maxent_tresh.cu <- st_set_crs(maxent_tresh.sp, crs_object)
+                
+                st_write(maxent_tresh.sp,  paste0(path_to_maxent,"/thresholded_" , species, "_shapefile.shp"))
+                
+                sum(is.na(maxent_tresh.sp))
+                maxent_tresh.sp[is.na(maxent_tresh.sp)] <- 0
+                png(file=paste0(path_to_maxent, "/", species, "_SuitableAreas.Tresh.png"))
+                plot(maxent_tresh.sp, width=15, height=10,main="Suitable Areas")
+                maps::map('worldHires',  add=TRUE,col='grey')
+                dev.off()
+             
+                result <-   sum(st_area(maxent_tresh.sp)/1000000)
+              }else{
+                result <-   0
+              }
+            
+            
+            }else{
+              maxent_tresh.sp = st_read(paste0(path_to_maxent,"/thresholded_" , species, "_shapefile.shp"))
+              result <-   sum(st_area(maxent_tresh.sp)/1000000)
+            }
+            result
+            areas = as_tibble(result)
+            areas.comparison = c(areas.comparison, areas)
+            
+          }
+        names(areas.comparison) = c("species", "cu","mpi", "miroc", "fuMPI", "fuMIROC")
+        write.csv(areas.comparison,file=paste0('./Nichemodels/', lineage, "/", species, "/Suitable_Areas_Comparison60perc_thres.csv"))
+      }
+    }
+    }
+  }
+}
