@@ -1,0 +1,155 @@
+########################################################################
+# make model prediction for past and future conditions
+# M. Pinilla - loop by M. Kandziora
+# 29/07/2022
+########################################################################
+
+######## Make all predicted Maxent Models #####
+chelsa.dat = read.csv('Results/chelsa_background.csv')[2:20]
+
+uncorrelated_vars <- vifstep(chelsa.dat, th=10)
+uncorr = uncorrelated_vars@results$Variables
+uncorr.numbers = gsub('CHELSA_bio10_', '', uncorr)
+#uncorr.numbers=c("02",'03','04','05','13','14','15','18','19')
+#select species first
+dir.create("Nichemodels")
+setwd(wd)
+region="SA"
+for(region in c("EA", "SA")){
+#setwd(wd)
+
+  if(region == "EA"){
+    #genera = c("Dendrosenecio", "Helichrysum", "Lobelia")
+    genera = c( "Helichrysum", "Lobelia")
+    
+  }else{
+    genera = c("Oritrophium","Loricaria", "Senecio",  "Espeletia")
+    #genera = c("Espeletia")
+    
+  }
+  for(lineage in genera){
+    occ = readRDS(paste0("./DATA/", lineage, "_cleaned_occurrences.INGROUP_complete.RDS",sep=""))
+    occ
+    
+    n.occ = occ %>% group_by(species) %>% summarise(n=n())
+    
+    spnames = unique(occ$species)
+    spnames
+    for(number in 1:length(spnames)){
+      species = spnames[number]
+      
+      names(occ)
+      at <- occ[occ$species==species,]
+  
+      at.x =unique(at)
+      #atocc=cbind.data.frame(at$longitude,at$latitude)
+      if((length(at$species) >4)) {
+        print(species)
+        if(dir.exists(paste0('./Nichemodels/', lineage, "/", species))){
+        ##############calc maxent models###################
+        for(model in modelnames){
+          print(model)
+          
+          model.path = get_path(model)
+          
+          path_to_maxent= paste0('./Nichemodels/', lineage, "/", species, "/", model.path)
+          path_to_maxent
+          dir.create(path_to_maxent)
+          
+          #########load model trained with present data #######
+          if(model == 'cu'){ # make maxent for current only and use this to predict to the past/future as well
+            path_to_maxent.cu = path_to_maxent
+            load(paste0(path_to_maxent.cu,"/" , species,'_atME.correctedunits.Rdata'))
+            
+          }
+          if(!file.exists(paste0(path_to_maxent,"/" , species, '_atpred.Rdata'))){       
+         
+          
+          fls = list.files("./DATA")
+          fls= fls[grepl(".tif", fls)]
+          fls= fls[grepl( paste0(model, region, "studyArea.correctedunits."), fls)]
+          fls
+          select = fls
+          select
+          path_to_chelsa = paste0("./DATA/",select, sep="")
+          
+          # reorder path to chelsa
+  
+          excl=c()
+          keep=c()
+          for(name in path_to_chelsa){
+            if(grepl('nc_1', name, fixed = TRUE)){
+              excl = c(excl, name)
+            }else{
+              keep = c(keep, name)
+            }
+          }
+          new.path = c(keep, excl)
+          new.path=new.path[new.path != "./DATA/cuSAstudyArea.correctedunits.CHELSA_bio10_08.tif"]
+          
+          clim <- stack(new.path)
+          plot(clim)
+          #names(clim) <- c("cuEAstudyArea.correctedunits.CHELSA_bio10_02", "cuEAstudyArea.correctedunits.CHELSA_bio10_03","cuEAstudyArea.correctedunits.CHELSA_bio10_04", "cuEAstudyArea.correctedunits.CHELSA_bio10_05", "cuEAstudyArea.correctedunits.CHELSA_bio10_13", "cuEAstudyArea.correctedunits.CHELSA_bio10_14","cuEAstudyArea.correctedunits.CHELSA_bio10_15","cuEAstudyArea.correctedunits.CHELSA_bio10_18","cuEAstudyArea.correctedunits.CHELSA_bio10_19")  # Example layer names
+          #names(clim) <- c("cuSAstudyArea.correctedunits.CHELSA_bio10_02", "cuSAstudyArea.correctedunits.CHELSA_bio10_03","cuSAstudyArea.correctedunits.CHELSA_bio10_04","cuSAstudyArea.correctedunits.CHELSA_bio10_05","cuSAstudyArea.correctedunits.CHELSA_bio10_13", "cuSAstudyArea.correctedunits.CHELSA_bio10_14","cuSAstudyArea.correctedunits.CHELSA_bio10_15","cuSAstudyArea.correctedunits.CHELSA_bio10_18","cuSAstudyArea.correctedunits.CHELSA_bio10_19")  # Example layer names
+          names(clim)<-c("bio.02", "bio.03", "bio.04", "bio.05", "bio.13", "bio.14", "bio.15", "bio.18", "bio.19")
+          # 
+          # excl=c()
+          # for(name in names(clim)){
+          #   print(name)
+          #   if(grepl('nc_1', name, fixed = TRUE)){
+          #     excl = c(excl, name)
+          #   }else
+          # }
+          # 
+          # excl
+          
+          # 
+          # gsub('nc_', 'nc_0',    names(clim)[! names(clim) %in%excl])
+          #names(clim) <-  paste('bio', uncorr.numbers)
+          # 
+          # names(clim)  
+          #  for(i in 1:length(uncorr.numbers)){
+          #   names=uncorr.numbers[i]
+          #  # print(names)
+          #   name = gsub('0', '', names)
+          #   names(clim)[grepl(paste0('nc_', name), names(clim))]
+          #   idx = which(grepl(paste0('nc_', name), names(clim)))
+          #   names(clim)[idx] = paste('bio', names)
+          # }
+          # names(clim) 
+          # 
+          
+          
+          #########calc maxent models#######
+          
+            # predict on current and future climate (this one uses the model created with training occ but predicts to entire dataset)
+            print('predict')
+            if(length(names(clim)) != length(uncorr)){
+              print('error with clim')
+              #print(bullshit)
+            }
+            asc_name = get_asc(model)
+            at.pred <-raster::predict(at.me, clim, filename= paste0(path_to_maxent,"/" , species, asc_name), overwrite=T)
+            at.pred@data
+            save(at.pred,  file=paste0(path_to_maxent,"/" , species,'_atpred.Rdata' ))
+            #plot it on a map
+            png(file=paste0(path_to_maxent, "/","Predicted_Suitability.png"))
+            plot(at.pred, main="Predicted Suitability")
+            maps::map('worldHires', fill=FALSE, add=TRUE,col='grey')
+            dev.off()
+            
+            #Map with the points
+            png(file=paste0(path_to_maxent, "/","Predicted_SuitabilitywPoints.png"))
+            plot(at.pred, main="Predicted Suitability")
+            maps::map('worldHires', fill=FALSE, add=TRUE,col='grey')
+            points(at$longitude, at$latitude, pch="+", cex=0.5)
+            dev.off()
+         }
+       }
+        
+        gc()
+      }
+    }
+  }
+ }
+}
