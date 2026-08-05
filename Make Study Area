@@ -1,0 +1,139 @@
+# Read the previously created background
+chelsa.dat = read.csv('Results/chelsa_background.csv')#[c(3:6,14:16,19:20)]
+
+uncorrelated_vars <- vifstep(chelsa.dat, th=10)
+uncorrelated_vars@results$Variables
+print(uncorrelated_vars)
+
+# Make layers smaller - crop to studyarea
+region='EA'
+for(region in c( 'EA', 'SA')){
+  print("make study area")
+  print(region)
+  bgs.ow.sp = readRDS( file = paste0("./DATA/", region, "background_all_polygon.RDS", sep=""))
+  
+  ####### Remove lakes #####
+  lake2 = shapefile("~/mariapinillav/DATA/ne_10m_lakes.shp")
+  plot(lake2)
+  crs(lake2)
+  
+  lake2b = crop(lake2, extent(bgs.ow.sp))
+  plot(lake2b)
+
+
+  for(model in modelnames){
+    print(model)
+    model.path = get_path(model)
+    
+    ################################
+    # crop tiff to smaller extents
+#    select <- get_biovar(model)
+    select = get_biovar_fromuncorr(model, uncorrelated_vars@results$Variables)
+    select
+    
+    path_to_chelsa = get_tiff_path(model)
+  
+    if(file.exists(  paste0("./DATA/", model, region, "studyArea.correctedunits.",  select[1]))){
+      # use only selected var
+      studyArea1 <- stack(paste(path_to_chelsa, select, sep="/"))
+      
+      plot(studyArea1)
+      
+      # make rasters smaller
+      studyArea <- crop(studyArea1,extent(bgs.ow.sp)) 
+      studyArea <- raster::mask(studyArea, bgs.ow.sp)
+      studyArea <- raster::mask(studyArea, lake2b, inverse=TRUE) 
+      saveRDS(studyArea, paste0("./DATA/", model, region, "studyArea.RDS", sep=""))
+     # writeRaster(studyArea,  paste0("./DATA/", model, region, "studyArea.grd", sep=""))
+     
+      # Create a CRS object from the PROJ.4 string
+      crs_proj4 <- "+proj=longlat +datum=WGS84 +no_defs"
+      
+      # Convert to a CRS object                                                           
+      crs_object <- sf::st_crs(crs_proj4)
+      
+      # Extract the WKT2 representation
+      wkt2_string <- crs_object$wkt
+      print(wkt2_string)
+      
+      
+      # if(model == 'cu'){
+      #   crs.cu = crs(studyArea)
+      # }
+      # if(model != 'cu'){
+      # 
+        studyArea <- projectRaster(studyArea, crs = wkt2_string)
+      # }
+      print('save layers')
+      
+    #  writeRaster(studyArea,  paste0("./DATA/", model, region, "studyArea.tif", sep=""), format = "GTiff")
+      for (i in 1:nlayers(studyArea)) {
+        layer <- studyArea[[i]]  # Extract the i-th layer
+        layername= select[i]
+        
+        
+        plot(layer)
+        #convert study area to have same units across models
+        # pmip3 - past - 1-11
+        #     K/10 
+        #     kg m-2/10 
+        
+        # cmip5/chelsa
+        # c/10
+        #      kg m-2
+    #    plot(layer)
+        
+        png(paste0("./DATA/", region,model, "studyArea.uncorrectedunits", i, '.png'))
+        plot(layer)
+        dev.off()
+        if(model %in% c('mpi', 'miroc')){
+          if(i %in% 1:3){ # TODO make universal to change all vif variants: cu:20-140 fÃ¼r i=1
+            layer = (layer/10)
+          }else if(i %in% 4){ # TODO make universal to change all vif variants: cu:20-140 fÃ¼r i=1
+            layer = (layer/10)-273.16
+          }else{ # i=5: 100-700
+            layer = layer/10
+          }
+        }else{
+          if(i %in% 1:4){ # TODO make universal to change all vif variants: cu:20-140 fÃ¼r i=1
+            layer = layer/10
+          }
+        }
+
+        plot(layer)
+        filename <- paste0("./DATA/", model, region, "studyArea.correctedunits.", layername)  # Define the file name
+        
+        writeRaster(layer, filename = filename, format = "GTiff", overwrite=TRUE)  # Save the layer as GeoTIFF
+        
+        png(paste0("./DATA/", region,model, "studyArea.correctedunits", i, '.png'))
+        plot(layer)
+        dev.off()
+      }
+    }
+  }
+}
+
+
+
+
+# check output graphically
+fls = list.files("./DATA")
+fls= fls[grepl(".tif", fls)]
+fls= fls[grepl( paste0("cu", region, "studyArea.correctedunits."), fls)]
+fls
+# select = fls[1:5]
+select = fls
+path_to_chelsa = paste0("./DATA/",select, sep="")
+studyArea <- stack(path_to_chelsa)
+plot(studyArea)
+
+
+fls = list.files("./DATA")
+fls= fls[grepl(".tif", fls)]
+fls= fls[grepl( paste0("mpi", region, "studyArea.correctedunits."), fls)]
+fls
+# select = fls[1:5]
+select = fls
+path_to_chelsa = paste0("./DATA/",select, sep="")
+studyArea.mpi <- stack(path_to_chelsa)
+plot(studyArea.mpi)
