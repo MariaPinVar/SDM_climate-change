@@ -1,0 +1,115 @@
+########################################################################
+# make maxent model for present conditions
+# M. Pinilla - loop by M. Kandziora
+# 29/07/2022
+########################################################################
+
+######## Make all Maxent Models #####
+chelsa.dat = read.csv('./Results/chelsa_background.csv')[2:20]
+
+uncorrelated_vars <- vifstep(chelsa.dat, th=10)
+uncorr = uncorrelated_vars@results$Variables
+uncorr.numbers = gsub('CHELSA_bio10_', '', uncorr)
+
+#select species first
+dir.create("Nichemodels")
+setwd(wd)
+
+model='cu'
+
+
+region="SA"
+#for(region in c("EA", "SA")){
+setwd(wd)
+
+if(region == "EA"){
+  #genera = c("Dendrosenecio", "Helichrysum", "Lobelia")
+  genera = c( "Helichrysum", "Lobelia")
+  
+}else{
+  genera = c("Oritrophium","Loricaria", "Senecio",  "Espeletia")
+  #genera=c("Espeletia")
+}
+for(lineage in genera){
+  dir.create(paste0("Nichemodels/", lineage))
+  occ = readRDS(paste0("./DATA/", lineage, "_cleaned_occurrences.INGROUP_complete.RDS",sep=""))
+  occ
+  
+  n.occ = occ %>% group_by(species) %>% summarise(n=n())
+  
+  spnames = unique(occ$species)
+  spnames
+  for(number in 1:length(spnames)){
+    # for(number in c(3,15, 60, 82 )){#for espeletia fix??
+    #number=16
+    species = spnames[number]
+    names(occ)
+    at <- occ[occ$species==species,]
+    at
+    at.x =unique(at)
+    atocc=cbind.data.frame(at$longitude,at$latitude)
+    if((length(at$species) >4)) {
+      print(species)
+      dir.create(paste0("Nichemodels/", lineage, "/", species))
+      fold <- dismo::kfold(atocc, k=5) #Select the percentage of occurrence points to be used to train the model (in this case 20%)
+      attest <- atocc[fold == 1, ]
+      attrain <- atocc[fold != 1, ]
+      
+      #################################
+      # calc maxent models
+      model.path = get_path(model)
+      
+      path_to_maxent= paste0('./Nichemodels/', lineage, "/", species, "/", model.path)
+      path_to_maxent
+      asc_name = get_asc(model)
+      
+      #########calc maxent models#######
+      # make maxent for current only and use this to predict to the past/future as well
+      path_to_maxent.cu = path_to_maxent
+      
+      #######################################
+      fls = list.files("./DATA")
+      fls= fls[grepl(".tif", fls)]
+      fls= fls[grepl( paste0(model, region, "studyArea.correctedunits."), fls)]
+      fls
+      
+      fls <- fls[fls != "cuSAstudyArea.correctedunits.CHELSA_bio10_08.tif"]
+      # select = fls[1:5]
+      select = fls
+      path_to_chelsa = paste0("./DATA/",select, sep="")
+      studyArea <- stack(path_to_chelsa)
+      # select <- get_biovar(model)
+      # fn=paste0("./DATA/", model, region, "studyArea.", i, ".tif")
+      # studyArea= raster(fn)
+      # studyArea=readRDS(file = paste0("./DATA/", model, region, "studyArea.RDS", sep=""))
+      clim=studyArea
+      names(clim)<-c("bio.02", "bio.03", "bio.04", "bio.05", "bio.13", "bio.14", "bio.15", "bio.18", "bio.19")
+      
+      #   layer_names <-   c("bio03", "bio05", "bio12","bio14", "bio15")
+      #names(clim) <- paste('bio', uncorr.numbers)
+      clim.cu = clim
+      
+      ################calc maxent#######################
+      if (!file.exists(paste0(path_to_maxent,"/" , species,'_atME.correctedunits.Rdata'))) {   
+        print("calc maxent")
+        dir.create(path_to_maxent)     
+        #Run Maxent with training occurrences and climatic layers
+        at.me <- dismo::maxent(clim, attrain, path=path_to_maxent,args=c("responsecurves"))
+        #saveRDS(at.me,  paste0(path_to_maxent,"/" , species,'atME.RDS'))
+        save(at.me, file=paste0(path_to_maxent,"/" , species, '_atME.correctedunits.Rdata'))
+        plot(at.me)
+        dismo::response(at.me)
+        #at.me
+        at.me@results
+        #at.me@results[2]
+        
+        #Test the model with pseudoabscences
+        bg <- dismo::randomPoints(clim, 1000) #background "pseudoabsences"
+        e1 <- dismo::evaluate(at.me, p=attest, a=bg, x=clim)
+        plot(e1, 'ROC')
+        write.csv(e1@auc, paste0(path_to_maxent,"/" , species, "_e1ModelAUC.csv"))
+      }   
+      gc()
+    }
+  }
+}
