@@ -1,4 +1,10 @@
-# Read the previously created background
+########################################################################
+# 3. Define the study Area
+# M. Pinilla - loop by M. Kandziora
+# 29/07/2022
+######################################################################### 
+
+Read the previously created background
 chelsa.dat = read.csv('Results/chelsa_background.csv')#[c(3:6,14:16,19:20)]
 
 uncorrelated_vars <- vifstep(chelsa.dat, th=10)
@@ -26,8 +32,7 @@ for(region in c( 'EA', 'SA')){
     model.path = get_path(model)
     
     ################################
-    # crop tiff to smaller extents
-#    select <- get_biovar(model)
+    # Crop tiff to smaller extents
     select = get_biovar_fromuncorr(model, uncorrelated_vars@results$Variables)
     select
     
@@ -70,19 +75,7 @@ for(region in c( 'EA', 'SA')){
       for (i in 1:nlayers(studyArea)) {
         layer <- studyArea[[i]]  # Extract the i-th layer
         layername= select[i]
-        
-        
-        plot(layer)
-        #convert study area to have same units across models
-        # pmip3 - past - 1-11
-        #     K/10 
-        #     kg m-2/10 
-        
-        # cmip5/chelsa
-        # c/10
-        #      kg m-2
-    #    plot(layer)
-        
+
         png(paste0("./DATA/", region,model, "studyArea.uncorrectedunits", i, '.png'))
         plot(layer)
         dev.off()
@@ -115,7 +108,6 @@ for(region in c( 'EA', 'SA')){
 
 
 
-
 # check output graphically
 fls = list.files("./DATA")
 fls= fls[grepl(".tif", fls)]
@@ -126,7 +118,6 @@ select = fls
 path_to_chelsa = paste0("./DATA/",select, sep="")
 studyArea <- stack(path_to_chelsa)
 plot(studyArea)
-
 
 fls = list.files("./DATA")
 fls= fls[grepl(".tif", fls)]
