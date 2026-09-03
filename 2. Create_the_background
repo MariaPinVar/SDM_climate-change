@@ -1,4 +1,10 @@
-## 2. Climate raster (grid) data
+########################################################################
+# Create the background for analysis
+# M. Pinilla -  M. Kandziora
+# 29/07/2022
+########################################################################## 
+
+2. Climate raster (grid) data
 ## CHELSA Bioclim layers GeoTIFF files (CHELSA V2.1, 1981-2010; horizontal resolution of 30 arc sec; Karger et al. 2017 Sci Data DOI 10.1038/sdata.2017.122 & Karger et al. 2017 Dryad DOI 10.5061/dryad.kd1d4; obtained from https://chelsa-climate.org/bioclim/)
 ## create a RasterStack for the bc layers
 
@@ -36,11 +42,12 @@ for(region in c("EA", "SA")){
   
   plot(st_geometry(world.sf))
   points(dat.spp.all[2:3])
+
   ###############################################
   ## 2.1 New World + Old World background (NW / OW bg): sample some spatial points (sp) within the study area (for the background/ranges/areas)
-  ##
+  
   ## 2.1.1 define the global study area per range (NW and OW) by concave polygons (convex hulls that may contain concave edges) around species occurrences
-  ##
+  
   ## Convert dat.spp (data frame) to sf, concaveman only reads matrix of coordinates, sf and SpatialPoint objects
   tmp.dat.spp.sf <- st_as_sf(dat.spp.all, coords = c("longitude" , "latitude"))
   plot(tmp.dat.spp.sf)
@@ -102,7 +109,7 @@ uncorrelated_vars <- vifstep(chelsa.dat, th=10)
 print(uncorrelated_vars)
 
 #############################################
-
+# Check for variable correlation
 
 chelsa.dat = read.csv('Results/chelsa_background.csv')[2:20]
 chelsa.dat <- chelsa.dat[, sapply(chelsa.dat, is.numeric)]
@@ -119,7 +126,7 @@ chelsa.sel = chelsa.dat.na[, uncorr]
 
 pca_result <- ade4::dudi.pca(chelsa.sel, center = TRUE, scale = TRUE, scannf = FALSE, nf = 5)
 
-# Scree plot
+# Screen plot
 barplot(pca_result$eig, main = "Eigenvalues", col = "skyblue")
 
 # Correlation circle
