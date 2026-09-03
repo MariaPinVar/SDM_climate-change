@@ -1,5 +1,5 @@
 ########################################################################
-# make maxent model for present conditions
+# 4. Make SDM model for present conditions
 # M. Pinilla - loop by M. Kandziora
 # 29/07/2022
 ########################################################################
@@ -16,7 +16,6 @@ dir.create("Nichemodels")
 setwd(wd)
 
 model='cu'
-
 
 region="SA"
 #for(region in c("EA", "SA")){
@@ -40,8 +39,6 @@ for(lineage in genera){
   spnames = unique(occ$species)
   spnames
   for(number in 1:length(spnames)){
-    # for(number in c(3,15, 60, 82 )){#for espeletia fix??
-    #number=16
     species = spnames[number]
     names(occ)
     at <- occ[occ$species==species,]
