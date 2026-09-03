@@ -1,13 +1,8 @@
 ########################################################################
-# make maxent threshold
+# 6. Threshold SDMS
 # M. Pinilla - loop by M. Kandziora
 # 29/07/2022
 ########################################################################
-
-
-## !!! TODO check MPV 04 future as there she is uysing sf instead of raster and fix all
-source('../SCRIPTS/Rcode/001_get_started_MK.R')
-
 
 ######## Threshold all Maxent Models #####
 chelsa.dat = read.csv('Results/chelsa_background.csv')[2:20]
@@ -77,14 +72,13 @@ for(region in c("SA", "EA")){
             maxent_tresh <-at.pred
             maxent_tresh
             maxent_tresh[maxent_tresh <=0.6] <- NA
-            #plot(maxent_tresh)
+            
             
             at.pred.sf = st_as_sf(maxent_tresh)
             sum.area = sum(st_area(at.pred.sf)/1000000)
             print(sum.area)
-            #drop_units(sum.area)
+            
             if(sum.area != 0){ # if there is suitable area
-           #   if(!file.exists(paste0(path_to_maxent,"/thresholded_" , species, "_shapefile.shp"))){
                 
                 print('write stars')
                 write_stars(maxent_tresh, paste0(path_to_maxent,"/thresholded_" , species, asc_name) )
