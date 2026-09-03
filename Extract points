@@ -1,9 +1,13 @@
-# make points within thresholded SDMs
+########################################################################
+# Extract random points from tresholded SDMs
+# M. Pinilla - loop by M. Kandziora
+# 29/07/2022
+######################################################################### 
 
-
-source('/home/rstudio/data/NicheModelsMaria_April24/Nichemodels_DATA/FUN/001_get_started_MK.R')
-
+# Create an empty data frame
 all.combined<-data_frame()
+
+# Select the region
 region='EA'
 
 print('make global point df')
