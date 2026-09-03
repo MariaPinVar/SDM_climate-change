@@ -1,5 +1,5 @@
 ########################################################################
-# make model prediction for past and future conditions
+# 5. make model prediction for past and future conditions
 # M. Pinilla - loop by M. Kandziora
 # 29/07/2022
 ########################################################################
@@ -16,7 +16,6 @@ dir.create("Nichemodels")
 setwd(wd)
 region="SA"
 for(region in c("EA", "SA")){
-#setwd(wd)
 
   if(region == "EA"){
     #genera = c("Dendrosenecio", "Helichrysum", "Lobelia")
@@ -46,7 +45,7 @@ for(region in c("EA", "SA")){
       if((length(at$species) >4)) {
         print(species)
         if(dir.exists(paste0('./Nichemodels/', lineage, "/", species))){
-        ##############calc maxent models###################
+        ##############calc SDMs ###################
         for(model in modelnames){
           print(model)
           
@@ -89,36 +88,6 @@ for(region in c("EA", "SA")){
           
           clim <- stack(new.path)
           plot(clim)
-          #names(clim) <- c("cuEAstudyArea.correctedunits.CHELSA_bio10_02", "cuEAstudyArea.correctedunits.CHELSA_bio10_03","cuEAstudyArea.correctedunits.CHELSA_bio10_04", "cuEAstudyArea.correctedunits.CHELSA_bio10_05", "cuEAstudyArea.correctedunits.CHELSA_bio10_13", "cuEAstudyArea.correctedunits.CHELSA_bio10_14","cuEAstudyArea.correctedunits.CHELSA_bio10_15","cuEAstudyArea.correctedunits.CHELSA_bio10_18","cuEAstudyArea.correctedunits.CHELSA_bio10_19")  # Example layer names
-          #names(clim) <- c("cuSAstudyArea.correctedunits.CHELSA_bio10_02", "cuSAstudyArea.correctedunits.CHELSA_bio10_03","cuSAstudyArea.correctedunits.CHELSA_bio10_04","cuSAstudyArea.correctedunits.CHELSA_bio10_05","cuSAstudyArea.correctedunits.CHELSA_bio10_13", "cuSAstudyArea.correctedunits.CHELSA_bio10_14","cuSAstudyArea.correctedunits.CHELSA_bio10_15","cuSAstudyArea.correctedunits.CHELSA_bio10_18","cuSAstudyArea.correctedunits.CHELSA_bio10_19")  # Example layer names
-          names(clim)<-c("bio.02", "bio.03", "bio.04", "bio.05", "bio.13", "bio.14", "bio.15", "bio.18", "bio.19")
-          # 
-          # excl=c()
-          # for(name in names(clim)){
-          #   print(name)
-          #   if(grepl('nc_1', name, fixed = TRUE)){
-          #     excl = c(excl, name)
-          #   }else
-          # }
-          # 
-          # excl
-          
-          # 
-          # gsub('nc_', 'nc_0',    names(clim)[! names(clim) %in%excl])
-          #names(clim) <-  paste('bio', uncorr.numbers)
-          # 
-          # names(clim)  
-          #  for(i in 1:length(uncorr.numbers)){
-          #   names=uncorr.numbers[i]
-          #  # print(names)
-          #   name = gsub('0', '', names)
-          #   names(clim)[grepl(paste0('nc_', name), names(clim))]
-          #   idx = which(grepl(paste0('nc_', name), names(clim)))
-          #   names(clim)[idx] = paste('bio', names)
-          # }
-          # names(clim) 
-          # 
-          
           
           #########calc maxent models#######
           
