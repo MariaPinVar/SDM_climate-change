@@ -1,0 +1,199 @@
+###########################
+# 
+#Functions to call models and directories
+#
+#############################
+
+get_path = function(model){
+  # get the directory name for your model
+  if(model == "fuMPI"){
+    dir = "maxent_outputsfutureMPI"
+  }else if(model == "fuMIROC"){
+    dir = "maxent_outputsfutureMIROC"
+  }else if(model == "cu"){
+    dir = "maxent_outputs"
+  }else  if(model == "miroc"){
+    dir = "maxent_outputs_past"
+  }else  if(model == "mpi"){
+    dir = "maxent_outputs_pastMPI"
+  }else if(model == "fuMIROC26"){
+    dir = "maxent_outputsfutureMIROC26"
+  }else{
+    print("model name is wrong")
+    stop("model name is wrong")
+  }
+  return(dir)
+}
+
+get_asc = function(maxent){
+  # get the directory name for your model
+  if(maxent == "fuMPI"){
+    dir = "_maxentpredictfuMPI.asc"
+  }else if(maxent == "fuMIROC"){
+    dir = "_maxentpredict_fuMIROC.asc"
+  }else if(maxent == "cu"){
+    dir = "_maxentpredict.asc"
+  }else  if(maxent == "miroc"){
+    dir = "_maxentpredict_past.asc"
+  }else  if(maxent == "mpi"){
+    dir = "_maxentpredict_pastMPI.asc"
+  }else if(maxent == "fuMIROC26"){
+    dir = "_maxentpredict_fuMIROC26.asc"
+  }else{
+    print("maxent name is wrong")
+    stop("maxent name is wrong")
+  }
+  return(dir)
+}
+
+
+get_name = function(maxent){
+ if(maxent == "miroc"){
+    dir = "MIROC"
+  }else  if(maxent == "mpi"){
+    dir = "MPI"
+  }else{
+    print("maxent name is wrong")
+    stop("maxent name is wrong")
+  }
+  return(maxent)
+}
+
+
+get_biovar = function(maxent){
+  if(maxent == "fuMPI"){
+    biovar =  c("CHELSA_bio_mon_MPI-ESM-LR_rcp45_r1i1p1_g025.nc_3_2041-2060_V1.2.tif",
+                "CHELSA_bio_mon_MPI-ESM-LR_rcp45_r1i1p1_g025.nc_5_2041-2060_V1.2.tif",
+                "CHELSA_bio_mon_MPI-ESM-LR_rcp45_r1i1p1_g025.nc_12_2041-2060_V1.2.tif",
+                "CHELSA_bio_mon_MPI-ESM-LR_rcp45_r1i1p1_g025.nc_14_2041-2060_V1.2.tif",
+                "CHELSA_bio_mon_MPI-ESM-LR_rcp45_r1i1p1_g025.nc_15_2041-2060_V1.2.tif")
+    
+  }else if(maxent == "fuMIROC"){
+    biovar = c("CHELSA_bio_mon_MIROC-ESM_rcp45_r1i1p1_g025.nc_3_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp45_r1i1p1_g025.nc_5_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp45_r1i1p1_g025.nc_12_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp45_r1i1p1_g025.nc_14_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp45_r1i1p1_g025.nc_15_2041-2060_V1.2.tif")
+    
+  }else if(maxent == "cu"){
+    biovar = c("CHELSA_bio10_03.tif",
+               "CHELSA_bio10_05.tif",
+               "CHELSA_bio10_12.tif",
+               "CHELSA_bio10_14.tif",
+               "CHELSA_bio10_15.tif")
+  }else  if(maxent == "miroc"){
+    biovar = c("CHELSA_PMIP_MIROC-ESM_BIO_03.tif",
+               "CHELSA_PMIP_MIROC-ESM_BIO_05.tif",
+               "CHELSA_PMIP_MIROC-ESM_BIO_12.tif",
+               "CHELSA_PMIP_MIROC-ESM_BIO_14.tif",
+               "CHELSA_PMIP_MIROC-ESM_BIO_15.tif")
+  }else  if(maxent == "mpi"){
+    biovar =  c("CHELSA_PMIP_MPI-ESM-P_BIO_03.tif",
+                "CHELSA_PMIP_MPI-ESM-P_BIO_05.tif",
+                "CHELSA_PMIP_MPI-ESM-P_BIO_12.tif",
+                "CHELSA_PMIP_MPI-ESM-P_BIO_14.tif",
+                "CHELSA_PMIP_MPI-ESM-P_BIO_15.tif")
+  }else if(maxent == "fuMIROC26"){
+    biovar = c("CHELSA_bio_mon_MIROC-ESM_rcp26_r1i1p1_g025.nc_3_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp26_r1i1p1_g025.nc_5_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp26_r1i1p1_g025.nc_12_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp26_r1i1p1_g025.nc_14_2041-2060_V1.2.tif",
+               "CHELSA_bio_mon_MIROC-ESM_rcp26_r1i1p1_g025.nc_15_2041-2060_V1.2.tif")
+  }else{
+    print("maxent name is wrong")
+    stop("maxent name is wrong")
+  }
+  return(biovar)
+  
+}
+
+
+get_biovar_fromuncorr = function(maxent, uncorr){
+  uncorr.numbers = gsub('CHELSA_bio10_', '', uncorr)
+  
+  if(maxent == "fuMPI"){
+    biovar = paste("CHELSA_bio_mon_MPI-ESM-LR_rcp45_r1i1p1_g025.nc_", uncorr.numbers, '_2041-2060_V1.2.tif',  sep="")
+    biovar = gsub('nc_0', 'nc_', biovar)
+  }else if(maxent == "fuMIROC"){
+    biovar = paste("CHELSA_bio_mon_MIROC-ESM_rcp45_r1i1p1_g025.nc_", uncorr.numbers, '_2041-2060_V1.2.tif',  sep="")
+    biovar = gsub('nc_0', 'nc_', biovar)
+  }else if(maxent == "cu"){
+    biovar = paste("CHELSA_bio10_", uncorr.numbers, '.tif',  sep="")
+  }else  if(maxent == "miroc"){
+    biovar = paste("CHELSA_PMIP_MIROC-ESM_BIO_", uncorr.numbers, '.tif',  sep="")
+
+  }else  if(maxent == "mpi"){
+    biovar = paste("CHELSA_PMIP_MPI-ESM-P_BIO_", uncorr.numbers, '.tif',  sep="")
+  }else if(maxent == "fuMIROC26"){
+    biovar = paste("CHELSA_bio_mon_MIROC-ESM_rcp26_r1i1p1_g025.nc_", uncorr.numbers, '_2041-2060_V1.2.tif',  sep="")
+    biovar = gsub('nc_0', 'nc_', biovar)
+  }else{
+    print("maxent name is wrong")
+    stop("maxent name is wrong")
+  }
+  return(biovar)
+  
+}
+
+
+get_tiff_path <- function(model){
+  # get the directory name for your model
+  if(model == "fuMPI"){
+    dir = '../CHELSA_bio_layers/future-mpi'
+  }else if(model == "fuMIROC"){
+    dir = '../CHELSA_bio_layers/future_miroc'
+  }else if(model == "cu"){
+    dir = "../CHELSA_bio_layers/current"
+  }else  if(model == "miroc"){
+    dir = '../CHELSA_bio_layers/miroc-esm'
+  }else  if(model == "mpi"){
+    dir = '../CHELSA_bio_layers/mpi-esm'
+  }else if(model == "fuMIROC26"){
+    dir = '../CHELSA_bio_layers/future-miroc26'
+  }else{
+    print("model name is wrong")
+    stop("model name is wrong")
+  }
+  return(dir)
+}
+
+###################################3
+
+
+get_stats <- function(df, groupvar, statvar) {
+  q_statvar <- as.name(statvar)
+  q_groupvar <- as.name(groupvar)
+  
+  
+  df %>% 
+   group_by(!!q_groupvar) %>% 
+    select(all_of(statvar))  %>%
+    summarise(
+      median = median(!!q_statvar, na.rm = TRUE),
+      mean = mean(!!q_statvar, na.rm = TRUE),
+      sd = sd(!!q_statvar, na.rm = TRUE),
+      q95 = quantile(!!q_statvar, 0.95, na.rm = TRUE),
+      q5 = quantile(!!q_statvar, 0.05, na.rm = TRUE),
+      min = min(!!q_statvar, na.rm = TRUE),
+      max = max(!!q_statvar, na.rm = TRUE),
+      range.min.max = max-min,
+      range.q = q95-q5,
+      #  wilcox.test = wilcox.test(q_statvar~q_groupvar, data=df), 
+      n = n())  %>%
+    return( )
+} 
+
+
+get_stats_species <- function(df) {
+  mean <- mean(df, na.rm=TRUE)
+  min = min(df, na.rm=TRUE)
+  max = max(df, na.rm=TRUE)  
+  median = median(df, na.rm=TRUE)
+  q5=quantile(df, 0.05, na.rm=TRUE)
+  q95=quantile(df, 0.95, na.rm=TRUE)
+  range.mm = max-min
+  range.q = q95-q5
+  new.line<-data.frame(mean, min, max, median, q5, q95, range.mm, range.q)
+  colnames(new.line)<-c("mean","min", 'max', "median", "q5", 'q95', "range.mm", "range.q") 
+  return(new.line )
+} 
